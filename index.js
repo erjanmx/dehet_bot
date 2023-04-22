@@ -1,5 +1,6 @@
 const fs = require('fs');
 const fetch = require('node-fetch');
+const cheerio = require('cheerio');
 
 const { Telegraf } = require('telegraf');
 const { message } = require('telegraf/filters');
@@ -26,10 +27,12 @@ async function downloadHTML(word) {
     console.log(`File '${filename}' saved`);
 }
 
-async function extractArticle(word) {
+function extractArticle(word) {
     const html = fs.readFileSync(buildFilename(word), 'utf-8');
+    const $ = cheerio.load(html);
+    const article = $('h2.nieuwH2 span').first().text();
 
-    return html.match(/\<span\>(De|Het)<\/span>\s*[^<]*<\/h2>/)?.[1];
+    return (article === 'De' || article === 'Het') ? article : null;
 }
 
 const bot = new Telegraf(process.env.BOT_TOKEN);
