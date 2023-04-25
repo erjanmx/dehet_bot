@@ -74,7 +74,7 @@ bot.on(message('text'), async (ctx) => {
 
     const word = words[0];
     try {
-        const value = await getArticleForWord(words);
+        const value = await getArticleForWord(word);
 
         ctx.reply(value ? `${value} ${word}` : `Geen resultaat voor '${word}'`);
     } catch (error) {
