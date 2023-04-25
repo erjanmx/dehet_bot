@@ -53,7 +53,7 @@ async function processWord(word) {
     let article = await getArticleFromDatabase(cleanedWord);
     
     if (!article) {
-        article = await getArticleFromWebsite(word);
+        article = await getArticleFromWebsite(cleanedWord);
 
         if (article) {
             await saveArticleToDatabase(cleanedWord, article);
