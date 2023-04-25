@@ -47,7 +47,7 @@ async function saveArticleToDatabase(word, article) {
     });
 }
 
-async function getArticleForWord(word) {
+async function processWord(word) {
     const cleanedWord = word.replace(/[^\w\s]|_/g, '').replace(/\s+/g, '').toLowerCase();
     
     let article = await getArticleFromDatabase(cleanedWord);
@@ -59,7 +59,7 @@ async function getArticleForWord(word) {
             await saveArticleToDatabase(cleanedWord, article);
         }
     }
-    return article;
+    return [ cleanedWord, article ];
 }
 
 bot.start((ctx) => ctx.reply('Hoi. Stuur me een woord en ik geef het lidwoord'));
@@ -72,11 +72,10 @@ bot.on(message('text'), async (ctx) => {
         return;  
     }
 
-    const word = words[0];
     try {
-        const value = await getArticleForWord(word);
+        const [ word, article ] = await processWord(words[0]);
 
-        ctx.reply(value ? `${value} ${word}` : `Geen resultaat voor '${word}'`);
+        ctx.reply(article ? `${article} ${word}` : `Geen resultaat voor '${word}'`);
     } catch (error) {
         console.error(`Error processing word '${word}':`, error);
         ctx.reply(`Sorry, er ging iets mis`);
