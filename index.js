@@ -1,15 +1,14 @@
+const fs = require('fs');
+const csv = require('csv-parser');
 const fetch = require('node-fetch');
 const cheerio = require('cheerio');
-const sqlite3 = require('sqlite3').verbose();
 
 const { Telegraf } = require('telegraf');
 const { message } = require('telegraf/filters');
 
-const db = new sqlite3.Database('words.db');
 const bot = new Telegraf(process.env.BOT_TOKEN);
 
-
-db.run(`CREATE TABLE IF NOT EXISTS words (word TEXT NOT NULL UNIQUE, article TEXT NOT NULL)`);
+let csvData = null;
 
 
 async function getArticleFromWebsite(word) {
@@ -23,28 +22,35 @@ async function getArticleFromWebsite(word) {
     return (article === 'De' || article === 'Het') ? article : null;
 }
 
-async function getArticleFromDatabase(word) {
+function loadCSV() {
     return new Promise((resolve, reject) => {
-        db.get('SELECT article FROM words WHERE word = ? LIMIT 1', [word], (err, row) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve(row ? row.article : null);
-            }
+        const results = [];
+
+        fs.createReadStream('de_het_1350.csv')
+        .pipe(csv())
+        .on('data', (data) => {
+            results.push(data);
+        })
+        .on('end', () => {
+            csvData = results;
+            resolve();
+        })
+        .on('error', (error) => {
+            reject(error);
         });
     });
 }
 
-async function saveArticleToDatabase(word, article) {
-    return new Promise((resolve, reject) => {
-        db.run('INSERT INTO words (word, article) VALUES (?, ?)', [word, article], (err) => {
-            if (err) {
-                reject(err);
-            } else {
-                resolve();
-            }
-        });
-    });
+async function getArticleFromDatabase(word) {
+    if (!csvData) {
+        console.debug('Loading CSV...');
+        await loadCSV();
+        console.debug('CSV Loaded');
+    }
+
+    const foundWord = csvData.find((item) => item.Word.toLowerCase() === word.toLowerCase());
+    const article = foundWord ? foundWord.Article : null;
+    return article;
 }
 
 async function processWord(word) {
@@ -53,11 +59,9 @@ async function processWord(word) {
     let article = await getArticleFromDatabase(cleanedWord);
     
     if (!article) {
-        article = await getArticleFromWebsite(cleanedWord);
+        console.info(`Trying web for '${word}':`);
 
-        if (article) {
-            await saveArticleToDatabase(cleanedWord, article);
-        }
+        article = await getArticleFromWebsite(cleanedWord);
     }
     return [ cleanedWord, article ];
 }
@@ -77,7 +81,7 @@ bot.on(message('text'), async (ctx) => {
 
         ctx.reply(article ? `${article} ${word}` : `Geen resultaat voor '${word}'`);
     } catch (error) {
-        console.error(`Error processing word '${word}':`, error);
+        console.error(`Error processing word '${words[0]}':`, error);
         ctx.reply(`Sorry, er ging iets mis`);
     }
 });
