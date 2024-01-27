@@ -6,7 +6,7 @@ const cheerio = require('cheerio');
 const { Telegraf } = require('telegraf');
 const { message } = require('telegraf/filters');
 
-const bot = new Telegraf('6122433307:AAHvVLe4edwJQ5pFX_dDqBFJFbk6rKCYU14');
+const bot = new Telegraf('process.env.BOT_TOKEN');
 
 let csvData = null;
 
