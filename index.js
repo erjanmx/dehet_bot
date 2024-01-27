@@ -6,7 +6,7 @@ const cheerio = require('cheerio');
 const { Telegraf } = require('telegraf');
 const { message } = require('telegraf/filters');
 
-const bot = new Telegraf(process.env.BOT_TOKEN);
+const bot = new Telegraf('6122433307:AAHvVLe4edwJQ5pFX_dDqBFJFbk6rKCYU14');
 
 let csvData = null;
 
@@ -55,9 +55,9 @@ async function getArticleFromDatabase(word) {
 
 async function processWord(word) {
     const cleanedWord = word.replace(/[^\w\s]|_/g, '').replace(/\s+/g, '').toLowerCase();
-    
+
     let article = await getArticleFromDatabase(cleanedWord);
-    
+
     if (!article) {
         console.info(`Trying web for '${word}':`);
 
@@ -73,7 +73,7 @@ bot.on(message('text'), async (ctx) => {
 
     if (words.length > 1) {
         ctx.reply('Stuur slechts één woord');
-        return;  
+        return;
     }
 
     try {
