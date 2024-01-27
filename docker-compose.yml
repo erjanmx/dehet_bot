@@ -2,6 +2,7 @@ version: '3.7'
 
 services:
   dehet_bot:
+    container_name: dehet-bot
     build:
       context: .
       dockerfile: Dockerfile
